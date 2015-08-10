@@ -20,10 +20,10 @@ def sum(pulsar):
 	os.system(call)
 
 
-# Align just using 
-def align(pulsar, dates):
+# Align using Gaussian template
+def align_gaussian_template(data_dir, pulsar, dates):
 	for date in dates:
-		filename = "*%s_%s*.dd_fscr8" %(pulsar, date)
+		filename = "%s/*%s_%s*.dd_fscr8" %(data_dir, pulsar, date)
 		numbins = getnumbins(filename)
 		templatefile = "/nimrod1/GBT/Ter5/GUPPI/PSRs/templates/*%s*%s*.template" %(pulsar, numbins)
 		command = "pat -R -TF -s %s %s" %(templatefile, filename)
@@ -79,6 +79,7 @@ def put_new_ephemeris(filename, psr):
     	print call
     	os.system(call)
 
+
 def multiplyflux(files, factor):
 	for filename in files:
 		call = "pam --mult %s -m %s" %(factor, filename)
@@ -87,22 +88,22 @@ def multiplyflux(files, factor):
 
 
 if __name__=='__main__':
-	print "Running main method"
+    data_dir = "/nimrod1/GBT/Ter5/GUPPI/"
 	allPSRs = set(['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
         	       'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
             		'Z', 'aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai'])
 	skip = set(['A', 'P', 'ad'])
 	PSRs = sorted(allPSRs - skip)
 
-	isolated = set(['C', 'D', 'F', 'G', 'H', 'K', 'L', 'R', 'S', 'T', 'aa', 'ab', 'ac', 'af', 'ag', 'ah'])
+    # for isolated pulsars, align using the Gaussian template
 
-	Lbanddates = set(['100501', '101027', '110222', '110402', '110701', '110925', '120106', 
-		'120406', '120705', '121006', '130107', '130407a', '130407b', '130701'])
-
-	#Lbanddates = set(['100501'])
-
-	#for psr in isolated:
-	#	align(psr, alldates)
+	isolated = set(['C', 'D', 'F', 'G', 'H', 'K', 'L', 'R', 'S', 'T', 'aa',
+                    'ab', 'ac', 'af', 'ag', 'ah'])
+	Lbanddates = set(['100501', '101027', '110222', '110402', '110701', '110925', 
+                      '120106', '120406', '120705', '121006', '130107', '130407a', 
+                      '130407b', '130701'])
+	for psr in isolated:
+		align_gaussian_template(data_dir, psr, Lbanddates)
 	
 	psr = 'ae'
 	nbin = '256'
