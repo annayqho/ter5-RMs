@@ -11,7 +11,8 @@ import itertools
 import matplotlib.pyplot as plt
 
 
-def ftolsquared(frequency): #Input: frequency in MHz
+def ftolsquared(frequency): 
+    """ Convert from frequency in MHz to wavelength squared in m^2 """
     c = 3.0*pow(10, 8)
     freq = frequency * pow(10, 6)
     wavelength = c / freq
@@ -28,7 +29,7 @@ def discardbin(PAerr, numbands):
 
 
 def getPAs_singlebin(filename, b):
-    """ Run the pdv command to extract PAs and PAerrors """
+    """ Run the pdv command to extract PAs and PAerrors from a single bin """
     output = subprocess.check_output(
         ['pdv', '-j', 'R 0', '-b %s' %b, '-Z', '-A', '-L 3', filename])
     output_split = np.array(output.split())[14:]
@@ -46,6 +47,7 @@ def getPAs_singlebin(filename, b):
 
 	
 def getPAs_allbins(filenames, nbin):
+    """ Extract PAs and PAerrs from all input files """
     nchan = 8
     nband = 2
     lsquareds = [] 
