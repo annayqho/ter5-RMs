@@ -22,17 +22,15 @@ def sum(pulsar):
 
 
 # Align using Gaussian template
-def align_gaussian_template(filenames):
-    for filename in filenames:
-		numbins = getnumbins(filename)
-		templatefile = "/nimrod1/GBT/Ter5/GUPPI/PSRs/templates/*%s*%s*.template" %(pulsar, numbins)
-		command = "pat -R -TF -s %s %s" %(templatefile, filename)
-		print command
-		os.system(command)
-		rotateby = raw_input("Amount to rotate by: ")
-		command = "pam -r %s -e aligned %s" %(rotateby, filename)
-		print command
-		os.system(command)
+def align_gaussian_template(filename):
+    nbins = getnumbins(filename)
+    psr = filename.split('_')[2]
+    templatefile = "/nimrod1/GBT/Ter5/GUPPI/PSRs/templates/%s_%s_gaussians.template" %(psr, nbins)
+    output = subprocess.check_output(['pat', '-R', '-TF', '-s', templatefile, filename])
+    rotateby = output.split()[3]
+    command = "pam -r %s -u ./output -e aligned %s" %(rotateby, filename)
+    print command
+    os.system(command)
 
 
 # Uses Tim's code
@@ -92,45 +90,17 @@ if __name__=='__main__':
     allfilesL = np.loadtxt("starting_files_Lband.txt", delimiter=',', dtype=str)
     allfilesS = np.loadtxt("starting_files_Sband.txt", delimiter=',', dtype=str)
     allfiles = np.concatenate((allfilesL, allfilesS)) 
-    psrs = [a.split('_')[2] for a in allfiles] # ex. Ter5A
+    psrs = np.array([a.split('_')[2] for a in allfiles]) # ex. Ter5A
     
-    # for isolated pulsars, align using the Gaussian template
+    # For isolated pulsars, align using the Gaussian template
 	isolated_short = np.array(['C', 'D', 'F', 'G', 'H', 'K', 'L', 'R', 'S', 'T', 'aa',
                     'ab', 'ac', 'af', 'ag', 'ah'])
     isolated = np.array(['Ter5' + a for a in isolated_short])
     ind_isolated = np.array([np.where(psrs==a)[0] for a in isolated]).flatten()
 	for filename in allfiles[ind_isolated]:
 		align_gaussian_template(filename)
-	
-	psr = 'ae'
-	nbin = '256'
-	ext = 'fscr8_tscr2'
-	band = 'Lband'
-	Sbanddates = set(['100815', '120415'])
-	#Lbanddates = set(['130107'])
-	#Lbanddates = Lbanddates - Lbanddates2 
-	files = []
 
-	for date in Lbanddates:
-		if date == "130407":
-			filename = "Ter5%s_%s/GUPPI_Ter5%s_130407a_0001.%s" %(psr, band, psr, ext)
-			files.append(filename)
-                        filename = "Ter5%s_%s/GUPPI_Ter5%s_130407b_0001.%s" %(psr, band, psr, ext)
-                        files.append(filename)
-		elif date == "120411":
-			filename = "Ter5%s_%s/GUPPI_Ter5%s_120411a_0001.%s" %(psr, band, psr, ext)
-                        files.append(filename)
-                        filename = "Ter5%s_%s/GUPPI_Ter5%s_120411b_0001.%s" %(psr, band, psr, ext)
-                        files.append(filename)
-#		elif date == "130417":
- #                       file = "Ter5%s_%s/GUPPI_Ter5%s_130417_0001.%s" %(psr, band, psr, ext)
-  #                      files.append(file)
-   #                     file = "Ter5%s_%s/GUPPI_Ter5%s_130417a_0001.%s" %(psr, band, psr, ext)
-    #                    files.append(file)
-		else:
-                        filename = "Ter5%s_%s/GUPPI_Ter5%s_%s_0001.%s" %(psr, band, psr, date, ext)
-			files.append(filename)
-		
+    # For binary pulsars with good timing solutions, use the ephemeris
 	talign(psr, files, nbin)
 	
 	#for psr in PSRs:
