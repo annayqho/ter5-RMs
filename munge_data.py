@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import numpy as np
 
 def getnumbins(filename):
 	command = "psrstat -c all:count %s" %filename
@@ -21,9 +22,8 @@ def sum(pulsar):
 
 
 # Align using Gaussian template
-def align_gaussian_template(data_dir, pulsar, dates):
-	for date in dates:
-		filename = "%s/*%s_%s*.dd_fscr8" %(data_dir, pulsar, date)
+def align_gaussian_template(filenames):
+    for filename in filenames:
 		numbins = getnumbins(filename)
 		templatefile = "/nimrod1/GBT/Ter5/GUPPI/PSRs/templates/*%s*%s*.template" %(pulsar, numbins)
 		command = "pat -R -TF -s %s %s" %(templatefile, filename)
@@ -88,22 +88,19 @@ def multiplyflux(files, factor):
 
 
 if __name__=='__main__':
-    data_dir = "/nimrod1/GBT/Ter5/GUPPI/"
-	allPSRs = set(['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        	       'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
-            		'Z', 'aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai'])
-	skip = set(['A', 'P', 'ad'])
-	PSRs = sorted(allPSRs - skip)
-
+    # Align profiles across days
+    allfilesL = np.loadtxt("starting_files_Lband.txt", delimiter=',', dtype=str)
+    allfilesS = np.loadtxt("starting_files_Sband.txt", delimiter=',', dtype=str)
+    allfiles = np.concatenate((allfilesL, allfilesS)) 
+    psrs = [a.split('_')[2] for a in allfiles] # ex. Ter5A
+    
     # for isolated pulsars, align using the Gaussian template
-
-	isolated = set(['C', 'D', 'F', 'G', 'H', 'K', 'L', 'R', 'S', 'T', 'aa',
+	isolated_short = np.array(['C', 'D', 'F', 'G', 'H', 'K', 'L', 'R', 'S', 'T', 'aa',
                     'ab', 'ac', 'af', 'ag', 'ah'])
-	Lbanddates = set(['100501', '101027', '110222', '110402', '110701', '110925', 
-                      '120106', '120406', '120705', '121006', '130107', '130407a', 
-                      '130407b', '130701'])
-	for psr in isolated:
-		align_gaussian_template(data_dir, psr, Lbanddates)
+    isolated = np.array(['Ter5' + a for a in isolated_short])
+    ind_isolated = np.array([np.where(psrs==a)[0] for a in isolated]).flatten()
+	for filename in allfiles[ind_isolated]:
+		align_gaussian_template(filename)
 	
 	psr = 'ae'
 	nbin = '256'
