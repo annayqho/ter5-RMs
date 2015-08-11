@@ -1,3 +1,5 @@
 *.txt
 *.rm_tscr
 *.tscr*
+*.autorot*
+*.forPA_b*
