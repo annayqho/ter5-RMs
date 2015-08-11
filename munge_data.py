@@ -1,4 +1,4 @@
-""" Methods for aligning profiles between days """
+""" Methods for preparing calibrated data for RM measurement """
 
 import os
 import subprocess
