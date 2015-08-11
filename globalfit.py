@@ -7,8 +7,8 @@ import sys
 import pylab as py
 from scipy.optimize import *
 import numpy as np
-import itertools
 import matplotlib.pyplot as plt
+import subprocess
 
 
 def ftolsquared(frequency): 
@@ -20,12 +20,11 @@ def ftolsquared(frequency):
     return wavelength_squared
 
 
-def discardbin(PAerr, numbands):
-    """ Determines whether this bin should be kept, or discarded """
-	if sum(PAerr>0) <= 1 + numbands:
-		return 1
-	else:
-		return 0
+def std_w(values, weights):
+    """ Returns the weighted standard deviation of a set of values """
+    average = np.average(values, weights=weights)
+    variance = np.average((values-average)**2, weights=weights)
+    return m.sqrt(variance)
 
 
 def getPAs_singlebin(filename, b):
@@ -50,32 +49,28 @@ def getPAs_allbins(filenames, nbin):
     """ Extract PAs and PAerrs from all input files """
     nchan = 8
     nband = 2
-    lsquareds = [] 
-    PAs = []	
-    PAerrs = []
+    lsquareds = np.zeros((nbin, nband, nchan)) 
+    PAs = np.zeros(lsquareds.shape)
+    PAerrs = np.zeros(lsquareds.shape)
     for b in range(nbin):
-        data = np.array([getPAs_singlebin(f, b) for f in filenames]) #nband,3,nchan
+        data = np.array(
+            [getPAs_singlebin(f, b) for f in filenames]) #nband,3,nchan
         ltemp = data[:,0,:]
         PAtemp = data[:,1,:]
         PAerrtemp = data[:,2,:] 
-        if discardbin(PAerrtemp, nband) == 1:
-            print("Bin %s discarded" %b)
+        # Test for wrapping cases
+        flatl = ltemp.flatten()
+        flatPA = PAtemp.flatten()
+        flatPAerr = PAerrtemp.flatten()
+        testPA = (flatPA + np.pi/2)%np.pi
+        if np.round(std_w(testPA, flatPAerr),5) < \
+            np.round(std_w(flatPA, flatPAerr),5):
+            print "wrapping in bin %s" %str(b)
+            PAs[b,:,:] = (PAtemp + np.pi/2)%np.pi
         else:
-            # Test for wrapping cases
-            flatl = ltemp.flatten()
-            flatPA = PAtemp.flatten()
-            flatPAerr = PAerrtemp.flatten()
-            testPA = (flatPA + np.pi/2)%np.pi
-            if np.round(std(testPA),5) < np.round(std(flatPA),5):
-                print "wrapping in bin %s" %str(b)
-                PAs.append((PAtemp + np.pi/2)%np.pi)
-            else:
-                PAs.append(PAtemp)
-            lsquareds.append(ltemp)
-            PAerrs.append(PAerrtemp)     
-    lsquareds = np.array(lsquareds)
-    PAs = np.array(PAs)
-    PAerrs = np.array(PAerrs)
+            PAs[b,:,:] = PAtemp
+        lsquareds[b,:,:] = ltemp
+        PAerrs[b,:,:] = PAerrtemp     
     return np.array(lsquareds), np.array(PAs), np.array(PAerrs)
 
 
