@@ -77,13 +77,14 @@ def calc_RM(lsquareds, PAs, PAerrs):
 
 def bin_consistency_test(lsquareds, PAs, PAerrs, psr):
     nbin = lsquareds.shape[0]
-    startbin = 118 
-    endbin = 122
+    npts = np.sum(np.sum(PAerrs<1e10, axis=2), axis=1)
+    bins = np.arange(nbin)[npts>2]
     RM_all = []
     RMerr_all = []
     offset_all = []
     offseterr_all = []
-    for b in range(startbin, endbin):
+    for b in bins:
+        print(b)
         lsquareds_choose = lsquareds[b,:,:].reshape(1,2,8)
         PAs_choose = PAs[b,:,:].reshape(1,2,8)
         PAerrs_choose = PAerrs[b,:,:].reshape(1,2,8)
@@ -113,6 +114,24 @@ def bin_consistency_test(lsquareds, PAs, PAerrs, psr):
     RMerr_all = np.array(RMerr_all)
     offset_all = np.array(offset_all)
     offseterr_all = np.array(offseterr_all)
+    errorbar(bins, RM_all-np.average(RM_all, weights=1./RMerr_all**2), 
+             yerr=RMerr_all, fmt='.', c='k')
+    axhline(y=0, c='r')
+    xlim(min(bins)-1, max(bins)+1)
+    xlabel("Bin")
+    ylabel("RM - avg(RM)")
+    title("Best-Fit RM For Individual Bins with >2 points")
+    savefig("output/%s_RMfits_acrossbins.png" %psr)
+    errorbar(bins, 
+             offset_all-np.average(offset_all, weights=1./offseterr_all**2),
+             yerr=offseterr_all, fmt='.', c='k')
+    axhline(y=0, c='r')
+    xlim(min(bins)-1, max(bins)+1)
+    xlabel("Bin")
+    ylabel("Offset - avg(Offset)")
+    title("Best-Fit Offset For Individual Bins with >2 points")
+    savefig("output/%s_offsetfits_acrossbins.png" %psr)
+    
 
 def run():
     filesL = np.sort(glob.glob("output/*Lband*.forPA_b128*"))
