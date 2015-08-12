@@ -65,7 +65,7 @@ def getPAs_allbins(filenames, nbin):
         testPA = (flatPA + np.pi/2)%np.pi
         if np.round(std_w(testPA, 1./flatPAerr),5) < \
             np.round(std_w(flatPA, 1./flatPAerr),5):
-            print "wrapping in bin %s" %str(b)
+            # print "wrapping in bin %s" %str(b)
             PAs[b,:,:] = (PAtemp + np.pi/2)%np.pi
         else:
             PAs[b,:,:] = PAtemp
