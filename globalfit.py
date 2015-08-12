@@ -77,23 +77,27 @@ def getPAs_allbins(filenames, nbin):
 def fitfunc1(m, b, x):
 	return (m*x+b)
 
+
 def sawfitfunc1(m, b, K, x):
 	return (m*x+b)%K
+
 
 def gfitfunc(m, b0, db, x):
 	# db is the offset
 	# b0 is the y-intercept of the bins in the first band
 	return (m * np.array(x) + (b0 + db))
 
-# For a basic line
+
 def errfunc1(p, x, y, yerr):
+    """ For a basic line """
 	returns = []
 	m = p[0]
 	b = p[1]
 	return (fitfunc1(m, b, x)-y)/yerr
 
-# For the global fit, assuming a constant offset between bands. 
+
 def gerrfunc(p, x, y, yerr, numbands):
+    """ For the global fit, assuming a constant offset between bands. """
 	numbins = len(x)
 	returns = []
 	m = p[0]
@@ -115,8 +119,9 @@ def gerrfunc(p, x, y, yerr, numbands):
 				returns.append(element)
 	return returns
 
-# For the global fit, assuming zero offset between bands
+
 def gerrfunc0(p, x, y, yerr):
+    """ For the global fit, assuming zero offset between bands """
     numbins = len(x)
     returns = []
     m = p[0] # one
@@ -132,6 +137,7 @@ def gerrfunc0(p, x, y, yerr):
             returns.append(element)
     return returns
 
+
 def linearfit1(x, y, yerr, initialvals):
 	p0 = initialvals
 	out = leastsq(errfunc1, p0, args=(x, y, yerr), full_output=1)
@@ -140,38 +146,36 @@ def linearfit1(x, y, yerr, initialvals):
 	errs = [covar[0][0], covar[1][1]]
 	return coefficients, errs
 
-def globalfit(x, y, yerr, initialvals, numbins, numbands, offset=1):
-    if len(x) == 0:
-        print "No bins survived."
-        return []
-    else:
-        print "Running global fit"
-        p0 = initialvals
-        # 'offset' determines whether you want to fit for an offset between bands
-        if offset == 0:
-            print "Not fitting for an offset..."
-            out = leastsq(gerrfunc0, p0, args=(x, y, yerr), full_output=1)
-            #In this case, values 1 through END are y-intercepts
-            offsets = []
-            coefficients = out[0]
-            RM = coefficients[0]
-            phi0s = coefficients[1:]
-        else:
-            print "Fitting for an offset..."
-            out = leastsq(gerrfunc, p0, args=(x, y, yerr, numbands), full_output=1)
-            # In this case, values 1 through numbands are offsets
-            coefficients = out[0]
-            RM = coefficients[0]
-            offsets = coefficients[1:numbands]
-            phi0s = coefficients[numbands:]
-		
-        covar = out[1]
 
-        if offset == 0:
-            errs = uncertainty0(covar, numbins, numbands)
-        if offset == 1:
-            errs = uncertainty(covar, numbins, numbands)
-        return RM, offsets, phi0s, errs
+def globalfit(x, y, yerr, initialvals, numbins, numbands, offset=1):
+    print "Running global fit"
+    p0 = initialvals
+    # 'offset' determines whether you want to fit for an offset between bands
+    if offset == 0:
+        print "Not fitting for an offset..."
+        out = leastsq(gerrfunc0, p0, args=(x, y, yerr), full_output=1)
+        #In this case, values 1 through END are y-intercepts
+        offsets = []
+        coefficients = out[0]
+        RM = coefficients[0]
+        phi0s = coefficients[1:]
+    else:
+        print "Fitting for an offset..."
+        out = leastsq(gerrfunc, p0, args=(x, y, yerr, numbands), full_output=1)
+        # In this case, values 1 through numbands are offsets
+        coefficients = out[0]
+        RM = coefficients[0]
+        offsets = coefficients[1:numbands]
+        phi0s = coefficients[numbands:]
+    
+    covar = out[1]
+
+    if offset == 0:
+        errs = uncertainty0(covar, numbins, numbands)
+    if offset == 1:
+        errs = uncertainty(covar, numbins, numbands)
+    return RM, offsets, phi0s, errs
+
 	
 def calcchisq1(rm, phi0, x, y, yerr, dof):
     totchisq = 0
@@ -183,8 +187,9 @@ def calcchisq1(rm, phi0, x, y, yerr, dof):
     normchisq = totchisq / (numdata - dof)
     return normchisq
 
-# This version is for no offset
+
 def calcchisq0(rm, phi0s, x, y, yerr):
+    """ This version is for no offset """
     totchisq, numdata = 0, 0
     numbins = len(phi0s)
     numbands = len(x[0])
@@ -204,8 +209,9 @@ def calcchisq0(rm, phi0s, x, y, yerr):
     normchisq = totchisq / (numdata - dof)
     return normchisq
 
-# For fitting for an offset
+
 def calcchisq(rm, offsets, phi0s, x, y, yerr):
+    """ For fitting for an offset """
     totchisq, numdata = 0, 0
     numbins = len(phi0s)
     numbands = len(offsets)+1
@@ -230,34 +236,36 @@ def calcchisq(rm, offsets, phi0s, x, y, yerr):
     normchisq = totchisq / (numdata - dof)
     return normchisq
 
-# This version is for no offset
-def uncertainty0(covar, numbins, numbands):
-        errs = []
-        # The covariance matrix has N diagonals, where N = numbins + numbands
-        sloperr = m.sqrt(covar[0][0])
-        errs.append(sloperr)
-        # The number of phiAs being fitted for: numbins
-        phiAerrs = []
-        print numbins
-        for i in range(1, numbins+1):
-            phiAerrs.append(m.sqrt(covar[i][i]))
-        errs.append(phiAerrs)
-        return errs
 
-# This version is for an offset	
+def uncertainty0(covar, numbins, numbands):
+    """ This version is for no offset """
+    errs = []
+    # The covariance matrix has N diagonals, where N = numbins + numbands
+    sloperr = m.sqrt(covar[0][0])
+    errs.append(sloperr)
+    # The number of phiAs being fitted for: numbins
+    phiAerrs = []
+    print numbins
+    for i in range(1, numbins+1):
+        phiAerrs.append(m.sqrt(covar[i][i]))
+    errs.append(phiAerrs)
+    return errs
+
+
 def uncertainty(covar, numbins, numbands):
-        errs = []
-        # The covariance matrix has N diagonals, where N = numbins + numbands
-        sloperr = m.sqrt(covar[0][0])
-        errs.append(sloperr)
-        # The number of offsets being fitted for: numbands - 1
-        offseterrs = []
-        for i in range(1, numbands):
-                offseterrs.append(m.sqrt(covar[i][i]))
-        errs.append(offseterrs)
-        # The number of phiAs being fitted for: numbins
-        phiAerrs = []
-        for i in range(numbands, numbins+numbands):
-                phiAerrs.append(m.sqrt(covar[i][i]))
-        errs.append(phiAerrs)
-        return errs
+    """ This version is for an offset """
+    errs = []
+    # The covariance matrix has N diagonals, where N = numbins + numbands
+    sloperr = m.sqrt(covar[0][0])
+    errs.append(sloperr)
+    # The number of offsets being fitted for: numbands - 1
+    offseterrs = []
+    for i in range(1, numbands):
+            offseterrs.append(m.sqrt(covar[i][i]))
+    errs.append(offseterrs)
+    # The number of phiAs being fitted for: numbins
+    phiAerrs = []
+    for i in range(numbands, numbins+numbands):
+            phiAerrs.append(m.sqrt(covar[i][i]))
+    errs.append(phiAerrs)
+    return errs

@@ -40,24 +40,30 @@ def diagnostic_raw_data(lsquareds, PAs, PAerrs, psr):
     plt.close()
 
 
-def fit_RM(pair):
+def get_data(pair):
     nbands = len(pair)
     psr = pair[0].split('/')[1]
     psr = psr.split('_')[0]
     nbin = int(pair[0].split('_')[3][1:])
     print("getting data points")
     lsquareds, PAs, PAerrs = g.getPAs_allbins(pair, nbin)
-    diagnostic_npts(lsquareds, PAs, PAerrs, psr)
-    diagnostic_raw_data(lsquareds, PAs, PAerrs, psr)
+    # diagnostic_npts(lsquareds, PAs, PAerrs, psr)
+    # diagnostic_raw_data(lsquareds, PAs, PAerrs, psr)
+    return lsquareds, PAs, PAerrs
+
+
+def calc_RM(lsquareds, PAs, PAerrs):
+    nbin = lsquareds.shape[0]
+    nbands = lsquareds.shape[1]
     p0 = [1] # dRM
-    for i in range(len(lsquareds)):
+    for i in range(nbin):
         p0.append(0.01) # will vary from bin to bin
-    # dRM, offsets, phi0s, errs = g.globalfit(
-    #     lsquareds, PAs, PAerrs, p0, nbin, nbands, offset=0)
-    #RMerr, phi0errs = errs[0], errs[1]
-    #chisq = g.calcchisq0(dRM, phi0s, lsquareds, PAs, PAerrs)
-    #RM = float(RM0) + float(dRM)
-    #return RM, RMerr, chisq
+    dRM, offsets, phi0s, errs = g.globalfit(
+        lsquareds, PAs, PAerrs, p0, nbin, nbands, offset=1)
+    RMerr, phi0errs = errs[0], errs[1]
+    chisq = g.calcchisq0(dRM, phi0s, lsquareds, PAs, PAerrs)
+    RM = float(RM0) + float(dRM)
+    return RM, RMerr, chisq
 
 
 def run():
@@ -67,4 +73,5 @@ def run():
     for i in range(npsr):
         pair = [filesL[i], filesS[i]]
         print(pair)
-        fit_RM(pair) # (nbin, nband, nchan)
+        lsquareds, PAs, PAerrs = get_data(pair) # (nbin, nband, nchan)
+        calc_RM(lsquareds, PAs, PAerrs)

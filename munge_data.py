@@ -20,7 +20,9 @@ def align_between_bands(filename):
     template = direc + '%s_%s_gaussians.template' %(psr, nbins)
     out = subprocess.check_output(['pat', '-R', '-TF', '-s', template, filename])
     rotateby = out.split(' ')[3]
-    os.system("pam -r %s -e autorot -u ./output %s" %(rotateby, filename))
+    command = "pam -r %s -e autorot -u ./output %s" %(rotateby, filename)
+    print(command)
+    os.system(command)
 
 
 def bin(filename):
