@@ -133,9 +133,21 @@ def bin_consistency_test(lsquareds, PAs, PAerrs, psr):
     savefig("output/%s_offsetfits_acrossbins.png" %psr)
     
 
+def run_singlepsr(psr):
+    fileL = glob.glob("output/%s*Lband*.forPA_b128" %psr)[0]
+    fileS = glob.glob("output/%s*Sband*.forPA_b128" %psr)[0]
+    pair = [fileL, fileS]
+    print(pair)
+    RM0 = get_fileRM(pair[0])
+    lsquareds, PAs, PAerrs = get_data(pair) # (nbin, nband, nchan)
+    dRM, offsets, phi0s, errs, chisq = calc_RM(lsquareds, PAs, PAerrs)
+    RM = float(RM0) + float(dRM)        
+    return RM, errs[0], offsets, errs[1]
+ 
+
 def run():
-    filesL = np.sort(glob.glob("output/*Lband*.forPA_b128*"))
-    filesS = np.sort(glob.glob("output/*Sband*.forPA_b128*"))
+    filesL = np.sort(glob.glob("output/*Lband*.forPA_b128"))
+    filesS = np.sort(glob.glob("output/*Sband*.forPA_b128"))
     npsr = len(filesL)
     for i in range(npsr):
         pair = [filesL[i], filesS[i]]
