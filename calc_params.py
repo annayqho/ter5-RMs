@@ -75,11 +75,14 @@ def calc_RM(lsquareds, PAs, PAerrs):
     return dRM, offsets, phi0s, errs, chisq 
 
 
-def bin_consistency_test(lsquareds, PAs, PAerrs, psr):
+def calc_RM_indbins(lsquareds, PAs, PAerrs, psr):
     nbin = lsquareds.shape[0]
-    npts = np.sum(np.sum(PAerrs<1e10, axis=2), axis=1)
-    bins = np.arange(nbin)[npts>2]
-    RM_all = []
+    npts = np.sum(PAerrs<1e10, axis=2)
+    npts_tot = np.sum(npts,axis=1)
+    nptsL = npts[:,0]
+    nptsS = npts[:,1]
+    bins = np.arange(nbin)[npts_tot>2]
+    dRM_all = []
     RMerr_all = []
     offset_all = []
     offseterr_all = []
@@ -90,14 +93,13 @@ def bin_consistency_test(lsquareds, PAs, PAerrs, psr):
         PAerrs_choose = PAerrs[b,:,:].reshape(1,2,8)
         dRM, offsets, phi0s, errs, chisq = calc_RM(
             lsquareds_choose, PAs_choose, PAerrs_choose)
-        RM = float(RM0) + float(dRM)
-        RM_all.append(RM)
+        dRM_all.append(dRM)
         RMerr_all.append(errs[0])
         offset_all.append(offsets[0])
         offseterr_all.append(errs[1][0])
-        errorbar(lsquareds_choose[0,0,:], PAs_choose[0,0,:], 
+        plt.errorbar(lsquareds_choose[0,0,:], PAs_choose[0,0,:], 
                  PAerrs_choose[0,0,:], fmt='.', c='r')
-        errorbar(lsquareds_choose[0,1,:], PAs_choose[0,1,:],
+        plt.errorbar(lsquareds_choose[0,1,:], PAs_choose[0,1,:],
                  PAerrs_choose[0,1,:], fmt='.', c='b')
         x = np.linspace(0.01, 0.07)
         y = dRM*x + phi0s[0]
@@ -110,10 +112,16 @@ def bin_consistency_test(lsquareds, PAs, PAerrs, psr):
         plt.ylabel("PA (radians)")
         plt.savefig("output/%s_bin%s_fit.png" %(psr, b))
         plt.close()
-    RM_all = np.array(RM_all)
+    dRM_all = np.array(dRM_all)
     RMerr_all = np.array(RMerr_all)
     offset_all = np.array(offset_all)
     offseterr_all = np.array(offseterr_all)
+    return bins, dRM_all, RMerr_all, offset_all, offseterr_all
+ 
+
+def diagnostic_bin_consistency(lsquareds, PAs, PAerrs, psr):
+    bins, RM_all, RMerr_all, offset_all, offseterr_all = calc_RM_indbins(
+        lsquareds, PAs, PAerrs, psr)
     errorbar(bins, RM_all-np.average(RM_all, weights=1./RMerr_all**2), 
              yerr=RMerr_all, fmt='.', c='k')
     axhline(y=0, c='r')
@@ -132,18 +140,6 @@ def bin_consistency_test(lsquareds, PAs, PAerrs, psr):
     title("Best-Fit Offset For Individual Bins with >2 points")
     savefig("output/%s_offsetfits_acrossbins.png" %psr)
     
-
-def run_singlepsr(psr):
-    fileL = glob.glob("output/%s*Lband*.forPA_b128" %psr)[0]
-    fileS = glob.glob("output/%s*Sband*.forPA_b128" %psr)[0]
-    pair = [fileL, fileS]
-    print(pair)
-    RM0 = get_fileRM(pair[0])
-    lsquareds, PAs, PAerrs = get_data(pair) # (nbin, nband, nchan)
-    dRM, offsets, phi0s, errs, chisq = calc_RM(lsquareds, PAs, PAerrs)
-    RM = float(RM0) + float(dRM)        
-    return RM, errs[0], offsets, errs[1]
- 
 
 def run():
     filesL = np.sort(glob.glob("output/*Lband*.forPA_b128"))

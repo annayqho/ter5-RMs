@@ -261,16 +261,25 @@ def uncertainty(covar, numbins, numbands):
     """ This version is for an offset """
     errs = []
     # The covariance matrix has N diagonals, where N = numbins + numbands
-    sloperr = m.sqrt(covar[0][0])
+    if covar[0][0] > 0: 
+        sloperr = m.sqrt(covar[0][0])
+    else:
+        sloperr = -1 # means the fitting hasn't converged properly
     errs.append(sloperr)
     # The number of offsets being fitted for: numbands - 1
     offseterrs = []
     for i in range(1, numbands):
+        if covar[i][i] > 0:
             offseterrs.append(m.sqrt(covar[i][i]))
+        else:
+            offseterrs.append(-1)
     errs.append(offseterrs)
     # The number of phiAs being fitted for: numbins
     phiAerrs = []
     for i in range(numbands, numbins+numbands):
+        if covar[i][i] > 0:
             phiAerrs.append(m.sqrt(covar[i][i]))
+        else:
+            phiAerrs.append(-1)
     errs.append(phiAerrs)
     return errs
