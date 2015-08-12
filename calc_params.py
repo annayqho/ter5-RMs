@@ -1,7 +1,8 @@
 import glob
 import numpy as np
-import globalfit as g
+import subprocess
 import matplotlib.pyplot as plt
+import globalfit as g
 
 def diagnostic_npts(lsquareds, PAs, PAerrs, psr):
     """ Plot the distribution of the number of points across the profile """
@@ -52,6 +53,13 @@ def get_data(pair):
     return lsquareds, PAs, PAerrs
 
 
+def get_fileRM(filename):
+    """ Read the RM from a file """
+    out = subprocess.check_output(
+        ['psrstat', '-c', 'rm', 'output/Ter5C_Lband_summed.forPA_b128'])    
+    return (out.split()[1]).split('=')[1]
+
+
 def calc_RM(lsquareds, PAs, PAerrs):
     nbin = lsquareds.shape[0]
     nbands = lsquareds.shape[1]
@@ -65,8 +73,7 @@ def calc_RM(lsquareds, PAs, PAerrs):
         lsquareds, PAs, PAerrs, p0, nbin, nbands, offset=1)
     RMerr, phi0errs = errs[0], errs[1]
     chisq = g.calcchisq0(dRM, phi0s, lsquareds, PAs, PAerrs)
-    RM = float(RM0) + float(dRM)
-    return RM, RMerr, chisq
+    return dRM, RMerr, chisq
 
 
 def run():
@@ -76,5 +83,8 @@ def run():
     for i in range(npsr):
         pair = [filesL[i], filesS[i]]
         print(pair)
+        RM0 = get_fileRM(pair[0])
         lsquareds, PAs, PAerrs = get_data(pair) # (nbin, nband, nchan)
-        calc_RM(lsquareds, PAs, PAerrs)
+        dRM, RMerr, chisq = calc_RM(lsquareds, PAs, PAerrs)
+        RM = float(RM0) + float(dRM)        
+        print(RM, RMerr, chisq)
