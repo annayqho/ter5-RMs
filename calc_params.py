@@ -71,10 +71,48 @@ def calc_RM(lsquareds, PAs, PAerrs):
         p0.append(0.01) # y-intercept, will vary from bin to bin
     dRM, offsets, phi0s, errs = g.globalfit(
         lsquareds, PAs, PAerrs, p0, nbin, nbands, offset=1)
-    RMerr, phi0errs = errs[0], errs[1]
     chisq = g.calcchisq0(dRM, phi0s, lsquareds, PAs, PAerrs)
-    return dRM, RMerr, chisq
+    return dRM, offsets, phi0s, errs, chisq 
 
+
+def bin_consistency_test(lsquareds, PAs, PAerrs, psr):
+    nbin = lsquareds.shape[0]
+    startbin = 118 
+    endbin = 122
+    RM_all = []
+    RMerr_all = []
+    offset_all = []
+    offseterr_all = []
+    for b in range(startbin, endbin):
+        lsquareds_choose = lsquareds[b,:,:].reshape(1,2,8)
+        PAs_choose = PAs[b,:,:].reshape(1,2,8)
+        PAerrs_choose = PAerrs[b,:,:].reshape(1,2,8)
+        dRM, offsets, phi0s, errs, chisq = calc_RM(
+            lsquareds_choose, PAs_choose, PAerrs_choose)
+        RM = float(RM0) + float(dRM)
+        RM_all.append(RM)
+        RMerr_all.append(errs[0])
+        offset_all.append(offsets[0])
+        offseterr_all.append(errs[1][0])
+        errorbar(lsquareds_choose[0,0,:], PAs_choose[0,0,:], 
+                 PAerrs_choose[0,0,:], fmt='.', c='r')
+        errorbar(lsquareds_choose[0,1,:], PAs_choose[0,1,:],
+                 PAerrs_choose[0,1,:], fmt='.', c='b')
+        x = np.linspace(0.01, 0.07)
+        y = dRM*x + phi0s[0]
+        plt.plot(x,y,c='k')
+        plt.plot(x,y+offsets[0],c='k')
+        plt.ylim(0,np.pi)
+        plt.xlim(0.01, 0.07)
+        plt.title("%s, Bin %s" %(psr, b))
+        plt.xlabel("Wavelength Squared (m^2)")
+        plt.ylabel("PA (radians)")
+        plt.savefig("output/%s_bin%s_fit.png" %(psr, b))
+        plt.close()
+    RM_all = np.array(RM_all)
+    RMerr_all = np.array(RMerr_all)
+    offset_all = np.array(offset_all)
+    offseterr_all = np.array(offseterr_all)
 
 def run():
     filesL = np.sort(glob.glob("output/*Lband*.forPA_b128*"))
@@ -85,6 +123,6 @@ def run():
         print(pair)
         RM0 = get_fileRM(pair[0])
         lsquareds, PAs, PAerrs = get_data(pair) # (nbin, nband, nchan)
-        dRM, RMerr, chisq = calc_RM(lsquareds, PAs, PAerrs)
+        dRM, offsets, phi0s, errs, chisq = calc_RM(lsquareds, PAs, PAerrs)
         RM = float(RM0) + float(dRM)        
         print(RM, RMerr, chisq)
