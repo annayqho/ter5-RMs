@@ -2,7 +2,7 @@ import os
 import numpy as np
 import make_starting_file_list
 import munge_data
-import fit_RM
+import calc_params 
 
 # create list of starting files
 # make_starting_file_list.run()
@@ -13,4 +13,4 @@ import fit_RM
 #     munge_data.run(filename, 180) # supply the starting guess for RM
 
 # get new RM 
-fit_RM.run()
+calc_params.run()
