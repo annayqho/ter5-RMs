@@ -5,7 +5,7 @@ import munge_data
 import calc_params 
 
 # create list of starting files
-# make_starting_file_list.run()
+make_starting_file_list.run()
 
 # for each file in the list, generate a .forPA file used in fitting
 starting_files = np.loadtxt("starting_files.txt", dtype=str, delimiter=',')
