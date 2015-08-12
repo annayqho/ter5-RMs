@@ -26,23 +26,24 @@ def align_between_bands(filename):
 def bin(filename):
     """ Bin the data to prepare it for fitting """
     call = "pam --setnbin 64 --setnchn 8 -e forPA_b64 -u ./output %s" %filename
-    print call
+    print(call)
     os.system(call)
 
     call = "pam --setnbin 128 --setnchn 8 -e forPA_b128 -u ./output %s" %filename
-    print call
+    print(call)
     os.system(call)
 
     call = "pam --setnbin 256 --setnchn 8 -e forPA_b256 -u ./output %s" %filename
-    print call
+    print(call)
     os.system(call)
 
 
 def run(filename, RM0):
+    print("CORRECT RM0")
     correct_RM0(filename, RM0)
-    rm_corr = glob.glob("output/*.rm_tscr")
-    for filename in rm_corr:
-        align_between_bands(filename)
-    autorot = glob.glob("output/*.autorot")
-    for filename in autorot:
-        bin(filename)
+    filename_short = (filename.split('/')[-1]).split('.')[0]
+    rm_corr = "output/" + filename_short + ".rm_tscr"
+    print("ALIGN")
+    align_between_bands(rm_corr)
+    autorot = "output/" + filename_short + ".autorot"
+    bin(autorot)

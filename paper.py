@@ -8,9 +8,13 @@ import calc_params
 # make_starting_file_list.run()
 
 # for each file in the list, generate a .forPA file used in fitting
-# starting_files = np.loadtxt("starting_files.txt", dtype=str, delimiter=',')
-# for filename in starting_files.flatten():
-#     munge_data.run(filename, 180) # supply the starting guess for RM
+starting_files = np.loadtxt("starting_files.txt", dtype=str, delimiter=',')
+for filename in starting_files.flatten():
+    psr = (filename.split('/')[-1]).split('_')[0]
+    if psr == 'Ter5D':
+        munge_data.run(filename, 220)
+    else:
+        munge_data.run(filename, 180) # supply the starting guess for RM
 
 # get new RM 
 calc_params.run()
