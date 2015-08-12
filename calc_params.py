@@ -56,8 +56,11 @@ def calc_RM(lsquareds, PAs, PAerrs):
     nbin = lsquareds.shape[0]
     nbands = lsquareds.shape[1]
     p0 = [1] # dRM
+    # this is JUST when fitting for an offset
+    for i in range(nbands-1):
+        p0.append(0.01) # an offset
     for i in range(nbin):
-        p0.append(0.01) # will vary from bin to bin
+        p0.append(0.01) # y-intercept, will vary from bin to bin
     dRM, offsets, phi0s, errs = g.globalfit(
         lsquareds, PAs, PAerrs, p0, nbin, nbands, offset=1)
     RMerr, phi0errs = errs[0], errs[1]

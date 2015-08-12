@@ -122,7 +122,6 @@ def gerrfunc(p, x, y, yerr):
             yerrdata = np.array(yerr[b][band])
             if band == 0: offset = 0
             else: offset = offsets[band-1]
-            print(b)
             err = (gfitfunc(m, b0s[b], offset, xdata)-ydata)/yerrdata
             for element in err:
                 returns.append(element)
