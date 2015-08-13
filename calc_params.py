@@ -7,7 +7,7 @@ import read_data
 
 
 def run_with_offsets(lsquareds, PAs, PAerrs):
-    """ Calculate parameters with separate y-intercept for each bin/band combo """
+    """ Calculate params with separate y-intercept for each bin/band combo """
     nbin = lsquareds.shape[0]
     nbands = lsquareds.shape[1]
     p0 = [1] # dRM
@@ -24,7 +24,41 @@ def run_with_offsets(lsquareds, PAs, PAerrs):
     return dRM, dRMerr, b0, b0err, db, dberr, chisq
 
 
+def run_with_offset(lsquareds, PAs, PAerrs):
+    """ Calculate separate y-intercept for each bin and a single offset """
+    nbin = lsquareds.shape[0]
+    nbands = lsquareds.shape[1]
+    p0 = [1] # dRM
+    for i in range(nbands-1):
+        p0.append(0.01) # an offset
+    for i in range(nbin):
+        p0.append(0.01) # y-intercept, will vary from bin to bin
+    dRM, db, b0, err = g.globalfit(
+        lsquareds, PAs, PAerrs, p0, nbin, nbands, offset=1)
+    chisq = g.calcchisq0(dRM, b0, lsquareds, PAs, PAerrs)
+    dRMerr = err[0]
+    dberr = err[1]
+    b0err = err[2]
+    return dRM, dRMerr, b0, b0err, db, dberr, chisq
+
+
+def run_with_no_offset(lsquareds, PAs, PAerrs):
+    """ Calculate separate y-intercept for each bin assuming no offset """
+    nbin = lsquareds.shape[0]
+    nbands = lsquareds.shape[1]
+    p0 = [1] # dRM
+    for i in range(nbin):
+        p0.append(0.01) # y-intercept, will vary from bin to bin
+    dRM, b0, err = g.globalfit(
+        lsquareds, PAs, PAerrs, p0, nbin, nbands, offset=1)
+    chisq = g.calcchisq0(dRM, b0, lsquareds, PAs, PAerrs)
+    dRMerr = err[0]
+    dberr = err[1]
+    return dRM, dRMerr, b0, b0err, chisq
+
+
 def calc_RM_indbins(lsquareds, PAs, PAerrs, psr):
+    """ Calculate an RM for each bin individually """
     nbin = lsquareds.shape[0]
     npts = np.sum(PAerrs<1e10, axis=2)
     npts_tot = np.sum(npts,axis=1)

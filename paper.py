@@ -31,5 +31,8 @@ for i in range(npsr):
 out = calc_params.run_with_offsets(lsquareds, PAs, PAerrs)
 dRM, dRMerr, b0, b0err, db, dberr, chisq = out
 
-calc_params.run_with_offset()
-calc_params.run_with_no_offset()
+calc_params.run_with_offset(lsquareds, PAs, PAerrs)
+dRM, dRMerr, b0, b0err, db, dberr, chisq = out
+
+calc_params.run_with_no_offset(lsquareds, PAs, PAerrs)
+dRM, dRMerr, b0, b0err, chisq = out
