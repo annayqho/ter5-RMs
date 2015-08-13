@@ -74,25 +74,28 @@ def getPAs_allbins(filenames, nbin):
     return np.array(lsquareds), np.array(PAs), np.array(PAerrs)
 
 
-def fitfunc1(m, b, x):
+def fitfunc(m, b, x):
+    """ Simple linear function """
 	return (m*x+b)
 
 
-def sawfitfunc1(m, b, K, x):
-	return (m*x+b)%K
-
-
-def gfitfunc(m, b0, db, x):
-	# db is the offset
-	# b0 is the y-intercept of the bins in the first band
-	return (m * x + (b0 + db))
-
-
-def errfunc1(p, x, y, yerr):
-    """ For a basic line """
+def errfunc(p, x, y, yerr):
+    """ Residual for a simple line """
     m = p[0]
     b = p[1]
     return (fitfunc1(m, b, x)-y)/yerr
+
+
+def gfitfunc(m, b0, db, x):
+    """ Linear function in terms of an offset 
+
+    Parameters
+    ----------
+    m: slope
+    b0: y-intercept of the first band
+    db: offset between the bands
+    """
+	return (m * x + (b0 + db))
 
 
 def gerrfunc(p, x, y, yerr):
