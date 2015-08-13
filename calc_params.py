@@ -9,14 +9,18 @@ import read_data
 def run_with_offsets(lsquareds, PAs, PAerrs):
     """ Calculate params with separate y-intercept for each bin/band combo """
     nbin = lsquareds.shape[0]
-    nbands = lsquareds.shape[1]
+    nband = lsquareds.shape[1]
     p0 = [1] # dRM
-    for i in range(nbands-1):
-        p0.append(0.01) # an offset
-    for i in range(nbin):
-        p0.append(0.01) # y-intercept, will vary from bin to bin
-    dRM, db, b0, err = g.globalfit(
-        lsquareds, PAs, PAerrs, p0, nbin, nbands, offset=1)
+    temp = np.zeros((nbin,nband))
+    temp.fill(0.01)
+    p0.append(temp)
+    out = minimize(
+        errfunc_offsets, p0, args=(lsquareds, PAs, PAerrs), full_output=1)
+    
+    
+
+g.globalfit(
+        lsquareds, PAs, PAerrs, p0, nbin, nband, offset=1)
     chisq = g.calcchisq0(dRM, b0, lsquareds, PAs, PAerrs)
     dRMerr = err[0]
     dberr = err[1]

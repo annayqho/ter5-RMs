@@ -1,6 +1,3 @@
-# This uses the scripts globalfit_2_linear_multibin, globalfit_linear_singlebin, and read_forPA_2 
-# and merges them into one.
-
 import os
 import math as m
 import sys
@@ -11,19 +8,7 @@ import matplotlib.pyplot as plt
 import subprocess
 
 
-def fitfunc(m, b, x):
-    """ Simple linear function """
-	return (m*x+b)
-
-
-def errfunc(p, x, y, yerr):
-    """ Residual for a simple line """
-    m = p[0]
-    b = p[1]
-    return (fitfunc1(m, b, x)-y)/yerr
-
-
-def gfitfunc(m, b0, db, x):
+def fitfunc(m, b0, db, x):
     """ Linear function in terms of an offset 
 
     Parameters
@@ -32,74 +17,70 @@ def gfitfunc(m, b0, db, x):
     b0: y-intercept of the first band
     db: offset between the bands
     """
-	return (m * x + (b0 + db))
+    return (m * x + (b0 + db))
 
 
-def gerrfunc(p, x, y, yerr):
-    """ Error function for the global fit
-
+def errfunc_offsets(p, x, y, yerr):
+    """ Error function for fitting nbin x nband y-intercepts 
+    
     Parameters
     ----------
-    p: np array, starting values
-    x: np array, l squareds, shape nbin x nbands x nchan
+    p: np array, starting values, shape (1, (nbin, nband))
+    x: np array, lsquareds, shape (nbin, nband, nchan)
     y: np array, PAs, parallel to x
     yerr: np array, PAerrs, parallel to x
     """
-    numbins = x.shape[0]
-    numbands = x.shape[1]
-    returns = []
     m = p[0]
-    offsets = []
-    for i in range(1, numbands):
-        offsets.append(p[i])
-    b0s = []
-    for i in range(numbands, len(p)):
-        b0s.append(p[i])
-    for b in range(0, numbins):
-        for band in range(0, numbands):
-            xdata = np.array(x[b][band])
-            ydata = np.array(y[b][band])
-            yerrdata = np.array(yerr[b][band])
-            if band == 0: offset = 0
-            else: offset = offsets[band-1]
-            err = (gfitfunc(m, b0s[b], offset, xdata)-ydata)/yerrdata
-            for element in err:
-                returns.append(element)
-    return returns
+    b0 = p[1]
+    nbin = x.shape[0]
+    nband = x.shape[1]
+    res = np.array([(y[i,j,:]-fitfunc(m, b0[i,j], 0, x[i,j,:]))/yerr[i,j,:]
+                     for ii in nbin for jj in nband])
+    return np.sqrt(sum(res**2)) # add res in quadrature 
 
 
-def gerrfunc0(p, x, y, yerr):
-    """ For the global fit, assuming zero offset between bands """
-    numbins = len(x)
-    returns = []
-    m = p[0] # one
-    b0s = [] # one per bin
-    for i in range(1, len(p)):
-        b0s.append(p[i])
-    for b in range(0, numbins):
-        xdata = np.array(x[b][0])
-        ydata = np.array(y[b][0])
-        yerrdata = np.array(yerr[b][0])
-        err = (fitfunc1(m, b0s[b], xdata)-ydata)/yerrdata
-        for element in err:
-            returns.append(element)
-    return returns
+def errfunc_offset(p, x, y, yerr):
+    """ Error function for fitting nbin y-intercepts and (nband-1) offsets
+    
+    Parameters
+    ----------
+    p: np array, starting values, shape (1, (nbin), (nband-1)) 
+    x: np array, lsquareds, shape (nbin, nband, nchan)
+    y: np array, PAs, parallel to x
+    yerr: np array, PAerrs, parallel to x
+    """
+    m = p[0]
+    b0 = p[1]
+    db = p[2]
+    nbin = x.shape[0]
+    res0 = np.array([(y[i,0,:]-fitfunc(m, b0[i], 0, x[i,0,:]))/yerr[i,0,:]
+                      for i in nbin])
+    res1 = np.array([(y[i,1,:]-fitfunc(m, b0[i], db[0], x[i,1,:]))/yerr[i,1,:]
+                      for i in nbin])
+    return np.sqrt(sum(res0**2) + sum(res1**2))
 
 
-def linearfit1(x, y, yerr, initialvals):
-	p0 = initialvals
-	out = leastsq(errfunc1, p0, args=(x, y, yerr), full_output=1)
-	coefficients = out[0]
-	covar = out[1]
-	errs = [covar[0][0], covar[1][1]]
-	return coefficients, errs
+def errfunc_no_offset(p, x, y, yerr):
+    """ Error function for fitting nbin y-intercepts and 0 offset
+    
+    Parameters
+    ----------
+    p: np array, starting values, shape (1, (nbin)) 
+    x: np array, lsquareds, shape (nbin, nband, nchan)
+    y: np array, PAs, parallel to x
+    yerr: np array, PAerrs, parallel to x
+    """ 
+    m = p[0]
+    b0 = p[1]
+    nbin = x.shape[0]
+    res = np.array([(y[i,:,:].flatten()-fitfunc(m,b0[i],0,x[i,:,:].flatten()))/
+                     yerr[i,:,:].flatten() for i in nbin])
+    return np.sqrt(sum(res**2)) # add res in quadrature 
 
 
 def globalfit(x, y, yerr, p0, numbins, numbands, offset=1):
     print "Running global fit"
     # 'offset' determines whether you want to fit for an offset between bands
-    if offset == 0:
-        print "Not fitting for an offset..."
         out = leastsq(gerrfunc0, p0, args=(x, y, yerr), full_output=1)
         #In this case, values 1 through END are y-intercepts
         offsets = []

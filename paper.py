@@ -2,8 +2,8 @@ import os
 import numpy as np
 import make_starting_file_list
 import munge_data
-import calc_params 
 import read_data
+import calc_params 
 
 # create list of starting files
 make_starting_file_list.run()

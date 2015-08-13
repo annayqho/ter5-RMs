@@ -41,11 +41,9 @@ def bin(filename):
 
 
 def run(filename, RM0):
-    print("CORRECT RM0")
     correct_RM0(filename, RM0)
     filename_short = (filename.split('/')[-1]).split('.')[0]
     rm_corr = "output/" + filename_short + ".rm_tscr"
-    print("ALIGN")
     align_between_bands(rm_corr)
     autorot = "output/" + filename_short + ".autorot"
     bin(autorot)
