@@ -11,69 +11,6 @@ import matplotlib.pyplot as plt
 import subprocess
 
 
-def ftolsquared(frequency): 
-    """ Convert from frequency in MHz to wavelength squared in m^2 """
-    c = 3.0*pow(10, 8)
-    freq = frequency * pow(10, 6)
-    wavelength = c / freq
-    wavelength_squared = pow(wavelength, 2)
-    return wavelength_squared
-
-
-def std_w(values, weights):
-    """ Returns the weighted standard deviation of a set of values """
-    average = np.average(values, weights=weights)
-    variance = np.average((values-average)**2, weights=weights)
-    return m.sqrt(variance)
-
-
-def getPAs_singlebin(filename, b):
-    """ Run the pdv command to extract PAs and PAerrors from a single bin """
-    output = subprocess.check_output(
-        ['pdv', '-j', 'R 0', '-b %s' %b, '-Z', '-A', '-L 3', filename])
-    output_split = np.array(output.split())[14:]
-    nrows = 8
-    ncols = len(output_split)/nrows
-    rows = output_split.reshape((nrows,ncols))
-    freqs = rows[:,5].astype(float)
-    lsquareds = np.array([ftolsquared(f) for f in freqs])
-    PAerrs = rows[:,ncols-1].astype(float) * m.pi/180.
-    PAerrs[PAerrs == 0] = 1e10 # ignore these data points in the fit
-    # it's easier to handle the data when it's between 0 and pi rather than 
-    # -pi/2 and pi/2
-    PAs = rows[:,ncols-2].astype(float) * m.pi/180. + m.pi/2
-    return lsquareds, PAs, PAerrs
-
-	
-def getPAs_allbins(filenames, nbin):
-    """ Extract PAs and PAerrs from all input files """
-    nchan = 8
-    nband = 2
-    lsquareds = np.zeros((nbin, nband, nchan)) 
-    PAs = np.zeros(lsquareds.shape)
-    PAerrs = np.zeros(lsquareds.shape)
-    for b in range(nbin):
-        data = np.array(
-            [getPAs_singlebin(f, b) for f in filenames]) #nband,3,nchan
-        ltemp = data[:,0,:]
-        PAtemp = data[:,1,:]
-        PAerrtemp = data[:,2,:] 
-        # Test for wrapping cases
-        flatl = ltemp.flatten()
-        flatPA = PAtemp.flatten()
-        flatPAerr = PAerrtemp.flatten()
-        testPA = (flatPA + np.pi/2)%np.pi
-        if np.round(std_w(testPA, 1./flatPAerr**2),5) < \
-            np.round(std_w(flatPA, 1./flatPAerr**2),5):
-            # print "wrapping in bin %s" %str(b)
-            PAs[b,:,:] = (PAtemp + np.pi/2)%np.pi
-        else:
-            PAs[b,:,:] = PAtemp
-        lsquareds[b,:,:] = ltemp
-        PAerrs[b,:,:] = PAerrtemp     
-    return np.array(lsquareds), np.array(PAs), np.array(PAerrs)
-
-
 def fitfunc(m, b, x):
     """ Simple linear function """
 	return (m*x+b)
