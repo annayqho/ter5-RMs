@@ -17,4 +17,3 @@ def std_w(values, weights):
     average = np.average(values, weights=weights)
     variance = np.average((values-average)**2, weights=weights)
     return m.sqrt(variance)
-

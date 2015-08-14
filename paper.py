@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import glob
 import make_starting_file_list
 import munge_data
 import read_data

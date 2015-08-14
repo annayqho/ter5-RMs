@@ -1,4 +1,5 @@
-import globalfit as g
+import numpy as np
+import subprocess
 import math_funcs as mf
 
 def getPAs_singlebin(filename, b):
@@ -10,11 +11,11 @@ def getPAs_singlebin(filename, b):
     ncols = len(output_split)/nrows
     rows = output_split.reshape((nrows,ncols))
     freqs = rows[:,5].astype(float)
-    lsquareds = np.array([math_funcs.ftolsquared(f) for f in freqs])
-    PAerrs = rows[:,ncols-1].astype(float) * m.pi/180.
+    lsquareds = np.array([mf.ftolsquared(f) for f in freqs])
+    PAerrs = rows[:,ncols-1].astype(float) * np.pi/180.
     PAerrs[PAerrs == 0] = 1e10 # ignore these data points in the fit
     # it's easier to handle the data when it's between 0 and pi  
-    PAs = rows[:,ncols-2].astype(float) * m.pi/180. + m.pi/2 
+    PAs = rows[:,ncols-2].astype(float) * np.pi/180. + np.pi/2 
     return lsquareds, PAs, PAerrs
 
     
@@ -58,7 +59,7 @@ def get_data(pair):
     psr = psr.split('_')[0]
     nbin = int(pair[0].split('_')[3][1:])
     print("getting data points")
-    lsquareds, PAs, PAerrs = g.getPAs_allbins(pair, nbin)
+    lsquareds, PAs, PAerrs = getPAs_allbins(pair, nbin)
     return lsquareds, PAs, PAerrs
 
 

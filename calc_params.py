@@ -19,13 +19,13 @@ def run_with_offsets(lsquareds, PAs, PAerrs):
     
     
 
-g.globalfit(
-        lsquareds, PAs, PAerrs, p0, nbin, nband, offset=1)
-    chisq = g.calcchisq0(dRM, b0, lsquareds, PAs, PAerrs)
-    dRMerr = err[0]
-    dberr = err[1]
-    b0err = err[2]
-    return dRM, dRMerr, b0, b0err, db, dberr, chisq
+# g.globalfit(
+#         lsquareds, PAs, PAerrs, p0, nbin, nband, offset=1)
+#     chisq = g.calcchisq0(dRM, b0, lsquareds, PAs, PAerrs)
+#     dRMerr = err[0]
+#     dberr = err[1]
+#     b0err = err[2]
+#     return dRM, dRMerr, b0, b0err, db, dberr, chisq
 
 
 def run_with_offset(lsquareds, PAs, PAerrs):

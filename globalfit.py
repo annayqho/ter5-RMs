@@ -81,20 +81,12 @@ def errfunc_no_offset(p, x, y, yerr):
 def globalfit(x, y, yerr, p0, numbins, numbands, offset=1):
     print "Running global fit"
     # 'offset' determines whether you want to fit for an offset between bands
-        out = leastsq(gerrfunc0, p0, args=(x, y, yerr), full_output=1)
-        #In this case, values 1 through END are y-intercepts
-        offsets = []
-        coefficients = out[0]
-        RM = coefficients[0]
-        phi0s = coefficients[1:]
-    else:
-        print "Fitting for an offset..."
-        out = leastsq(gerrfunc, p0, args=(x, y, yerr), full_output=1)
-        # In this case, values 1 through numbands are offsets
-        coefficients = out[0]
-        RM = coefficients[0]
-        offsets = coefficients[1:numbands]
-        phi0s = coefficients[numbands:]
+    out = leastsq(gerrfunc0, p0, args=(x, y, yerr), full_output=1)
+    #In this case, values 1 through END are y-intercepts
+    offsets = []
+    coefficients = out[0]
+    RM = coefficients[0]
+    phi0s = coefficients[1:]
     covar = out[1]
     if offset == 0:
         errs = uncertainty0(covar, numbins, numbands)
